@@ -1,11 +1,402 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Power Apps YAML Snippets</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #60ad5e;
+            --primary-dark: #005005;
+            --secondary-color: #f5f5f5;
+            --text-on-primary: #ffffff;
+            --text-color: #333333;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: var(--text-color);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: var(--text-on-primary);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .search-bar {
+            margin-bottom: 2rem;
+            width: 100%;
+            display: flex;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .snippets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .snippet-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .snippet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .snippet-preview {
+            height: 180px;
+            background-color: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .snippet-preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .snippet-content {
+            padding: 1.5rem;
+        }
+        
+        .snippet-title {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-dark);
+            font-size: 1.2rem;
+        }
+        
+        .snippet-description {
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .snippet-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: var(--text-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-header {
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .yaml-container {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .copy-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+            box-shadow: var(--card-shadow);
+        }
+        
+        @media (max-width: 768px) {
+            .snippets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>TEST</h1>
+    <header>
+        <h1>Power Apps YAML Snippets</h1>
+    </header>
+
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Rechercher un snippet...">
+        </div>
+
+        <div class="snippets-grid" id="snippets-container">
+            <!-- Les snippets seront chargés dynamiquement depuis data/snippets.json -->
+        </div>
+    </div>
+
+    <!-- Modal pour afficher le snippet complet -->
+    <div class="modal" id="snippet-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Titre du Snippet</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="snippet-preview" id="modal-preview">
+                    <img src="/api/placeholder/400/200" alt="Aperçu du snippet" id="modal-image">
+                </div>
+                <h3>Description</h3>
+                <p id="modal-description">Description du snippet...</p>
+                <h3>Code YAML</h3>
+                <div class="yaml-container" id="modal-yaml">
+                    # Code YAML ici
+                </div>
+                <button class="btn btn-primary" id="copy-btn">Copier le code</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-notification" id="copy-notification">
+        Code copié dans le presse-papiers!
+    </div>
+
+    <script>
+        // URL du fichier JSON contenant les snippets
+        const snippetsUrl = './data/snippets.json';
+        
+        // Éléments DOM
+        const snippetsContainer = document.getElementById('snippets-container');
+        const searchInput = document.getElementById('search-input');
+        const modal = document.getElementById('snippet-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDescription = document.getElementById('modal-description');
+        const modalYaml = document.getElementById('modal-yaml');
+        const modalImage = document.getElementById('modal-image');
+        const copyBtn = document.getElementById('copy-btn');
+        const copyNotification = document.getElementById('copy-notification');
+        const closeModalBtn = document.querySelector('.close');
+        
+        // Liste de tous les snippets
+        let allSnippets = [];
+        
+        // Charger les snippets depuis le fichier JSON
+        async function loadSnippets() {
+            try {
+                const response = await fetch(snippetsUrl);
+                const data = await response.json();
+                allSnippets = data.snippets;
+                renderSnippets(allSnippets);
+            } catch (error) {
+                console.error('Erreur lors du chargement des snippets:', error);
+                // Afficher des exemples de snippets si le fichier n'existe pas encore
+                renderDemoSnippets();
+            }
+        }
+        
+        // Afficher des snippets de démonstration
+        function renderDemoSnippets() {
+            const demoSnippets = [
+                {
+                    id: 1,
+                    title: "Galerie avec filtres",
+                    description: "Une galerie avec des options de filtrage dynamiques",
+                    image: "/api/placeholder/300/180",
+                    yaml: "Gallery:\n  Items: Table1\n  Filter: Filter.Value\n  Template: \n    OnSelect: Navigate(DetailsScreen)"
+                },
+                {
+                    id: 2,
+                    title: "Formulaire avec validation",
+                    description: "Formulaire incluant la validation des champs",
+                    image: "/api/placeholder/300/180",
+                    yaml: "Form:\n  DataSource: Table1\n  Items: Table1\n  OnSuccess: Navigate(HomeScreen)\n  Fields:\n    - Name: TextInput\n    - Email: TextInput\n      Validation: IsMatch(Email, \"[^@]+@[^@]+\\.[^@]+\")"
+                },
+                {
+                    id: 3,
+                    title: "Navigation par onglets",
+                    description: "Barre de navigation avec onglets interactifs",
+                    image: "/api/placeholder/300/180",
+                    yaml: "TabNavigation:\n  Items: [\n    { Label: \"Accueil\", Screen: HomeScreen },\n    { Label: \"Paramètres\", Screen: SettingsScreen }\n  ]\n  SelectedItem: ThisItem.Screen"
+                }
+            ];
+            
+            allSnippets = demoSnippets;
+            renderSnippets(demoSnippets);
+        }
+        
+        // Afficher les snippets dans la grille
+        function renderSnippets(snippets) {
+            snippetsContainer.innerHTML = '';
+            
+            if (snippets.length === 0) {
+                snippetsContainer.innerHTML = '<p>Aucun snippet trouvé.</p>';
+                return;
+            }
+            
+            snippets.forEach(snippet => {
+                const card = document.createElement('div');
+                card.className = 'snippet-card';
+                card.innerHTML = `
+                    <div class="snippet-preview">
+                        <img src="${snippet.image}" alt="${snippet.title}">
+                    </div>
+                    <div class="snippet-content">
+                        <h3 class="snippet-title">${snippet.title}</h3>
+                        <p class="snippet-description">${snippet.description}</p>
+                        <div class="snippet-actions">
+                            <button class="btn btn-primary view-btn" data-id="${snippet.id}">Voir</button>
+                        </div>
+                    </div>
+                `;
+                snippetsContainer.appendChild(card);
+                
+                // Ajouter l'événement pour le bouton "Voir"
+                card.querySelector('.view-btn').addEventListener('click', () => openSnippetModal(snippet));
+            });
+        }
+        
+        // Filtrer les snippets en fonction de la recherche
+        function filterSnippets(query) {
+            query = query.toLowerCase();
+            const filtered = allSnippets.filter(snippet => 
+                snippet.title.toLowerCase().includes(query) || 
+                snippet.description.toLowerCase().includes(query)
+            );
+            renderSnippets(filtered);
+        }
+        
+        // Ouvrir la modal avec les détails du snippet
+        function openSnippetModal(snippet) {
+            modalTitle.textContent = snippet.title;
+            modalDescription.textContent = snippet.description;
+            modalYaml.textContent = snippet.yaml;
+            modalImage.src = snippet.image;
+            modal.style.display = 'flex';
+        }
+        
+        // Événements
+        
+        // Recherche
+        searchInput.addEventListener('input', () => {
+            filterSnippets(searchInput.value);
+        });
+        
+        // Fermer la modal
+        closeModalBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        // Cliquer en dehors de la modal pour la fermer
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        // Copier le code YAML
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(modalYaml.textContent)
+                .then(() => {
+                    copyNotification.style.display = 'block';
+                    setTimeout(() => {
+                        copyNotification.style.display = 'none';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la copie:', err);
+                });
+        });
+        
+        // Initialiser l'application
+        loadSnippets();
+    </script>
 </body>
 </html>
